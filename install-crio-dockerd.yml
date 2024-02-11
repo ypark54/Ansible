@@ -1,0 +1,56 @@
+---
+- name: Install cri-dockerd
+  hosts: all
+  become: yes  # Required for installation and systemd manipulation
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name: git, build-essential
+        state: present
+        update_cache: yes
+
+    - name: Clone cri-dockerd repository
+      ansible.builtin.git:
+        repo: 'https://github.com/Mirantis/cri-dockerd.git'
+        dest: '/tmp/cri-dockerd'
+        clone: yes
+        update: yes
+
+    - name: Build cri-dockerd
+      ansible.builtin.shell:
+        chdir: '/tmp/cri-dockerd'
+        cmd: 'make cri-dockerd'
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/go/bin"
+
+    - name: Install cri-dockerd binary
+      ansible.builtin.command:
+        cmd: 'install -o root -g root -m 0755 /tmp/cri-dockerd/cri-dockerd /usr/local/bin/cri-dockerd'
+        creates: '/usr/local/bin/cri-dockerd'
+
+    - name: Install systemd service and socket files
+      ansible.builtin.copy:
+        src: '/tmp/cri-dockerd/packaging/systemd/{{ item }}'
+        dest: '/etc/systemd/system/{{ item }}'
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - cri-docker.service
+        - cri-docker.socket
+
+    - name: Update cri-docker.service ExecStart path
+      ansible.builtin.replace:
+        path: '/etc/systemd/system/cri-docker.service'
+        regexp: '/usr/bin/cri-dockerd'
+        replace: '/usr/local/bin/cri-dockerd'
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start cri-docker.socket
+      ansible.builtin.systemd:
+        name: cri-docker.socket
+        enabled: yes
+        state: started

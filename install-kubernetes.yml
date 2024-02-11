@@ -1,0 +1,56 @@
+---
+- name: Install Kubernetes on Ubuntu
+  hosts: all
+  become: yes  # Required to become root
+  tasks:
+    - name: Update apt cache and install required packages
+      ansible.builtin.apt:
+        update_cache: yes
+        autoremove: true
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+        state: present
+
+    - name: Ensure /etc/apt/keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Kubernetes GPG key
+      ansible.builtin.get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        dest: "/tmp/kubernetes-apt-keyring.key"
+        mode: '0644'
+
+    - name: Import Kubernetes GPG key
+      ansible.builtin.shell:
+        cmd: "gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-apt-keyring.key"
+      args:
+        creates: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+
+    - name: Add Kubernetes APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
+        state: present
+        filename: kubernetes
+
+    - name: Install Kubernetes components
+      ansible.builtin.apt:
+        update_cache: yes
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+
+    - name: Hold Kubernetes components at their current version
+      ansible.builtin.apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: fixed
