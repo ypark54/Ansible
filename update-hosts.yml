@@ -1,0 +1,19 @@
+---
+- name: Update /etc/hosts file
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure entries are present in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+        state: present
+        regexp: '^(\s*{{ item.split()[0] }})\s+{{ item.split()[1] }}.*$'
+      loop:
+        - "192.168.35.202  ubuntu-master-1"
+        - "192.168.35.203  ubuntu-master-2"
+        - "192.168.35.204  ubuntu-ha-proxy"
+        - "192.168.35.212  ubuntu-slave-1"
+        - "192.168.35.213  ubuntu-slave-2"
+        - "192.168.35.214  ubuntu-slave-3"
+        - "192.168.35.215  ubuntu-slave-4"
