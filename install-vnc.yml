@@ -1,0 +1,73 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Update cache and install lightdm
+      apt:
+        update_cache: yes
+        name:
+        - lightdm
+        state: present
+
+    - name: Set lightdm as the default display manager
+      copy:
+        content: /usr/sbin/lightdm
+        dest: /etc/X11/default-display-manager
+
+    - name: Reconfigure lightdm in a non-interactive way
+      shell: DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure lightdm
+      environment:
+        DEBIAN_FRONTEND: "noninteractive"
+        DEBCONF_NONINTERACTIVE_SEEN: "true"
+    
+    - name: Reboot the server
+      ansible.builtin.reboot:
+        msg: "Rebooting for system updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 60
+        test_command: uptime
+
+    - name: Wait for the server to come back
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 300
+
+    - name: Install x11vnc
+      apt:
+        name:
+        - x11vnc
+        state: present
+    
+    - name: Ensure x11vnc service file is present
+      copy:
+        dest: /lib/systemd/system/x11vnc.service
+        content: |
+          [Unit]
+          Description=x11vnc service
+          After=display-manager.service network.target syslog.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/bin/x11vnc -forever -display :0 -auth guess -passwd CarMaker
+          ExecStop=/usr/bin/killall x11vnc
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+
+    - name: Enable and start x11vnc service
+      systemd:
+        name: x11vnc
+        enabled: yes
+        state: started
+        
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes

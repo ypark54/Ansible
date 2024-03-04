@@ -2,10 +2,10 @@
 - hosts: all
   become: true
   tasks:
-  - name: Update, Upgrade, and Autoclean
-    apt:
-      update_cache: yes
-      upgrade: yes
-      autoremove: true
-      autoclean: true
-      purge: true
+    - name: Update, Upgrade, and Autoclean
+      apt:
+        update_cache: yes
+        upgrade: yes
+        autoremove: true
+        autoclean: true
+        purge: true

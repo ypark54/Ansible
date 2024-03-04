@@ -1,0 +1,45 @@
+# Installation of ros2 humble on Ubuntu 22.04
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Enable universe, multiverse repository
+      shell: add-apt-repository universe -y && add-apt-repository multiverse -y
+
+    - name: Update, Upgrade, and Autoclean
+      apt:
+        update_cache: yes
+        name:
+        - locales
+        - software-properties-common
+        - curl
+        state: present
+
+    - name: Ensure /etc/apt/keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download ros2 GPG key
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/ros/rosdistro/master/ros.key
+        dest: /usr/share/keyrings/ros-archive-keyring.gpg
+        mode: 'a+r'
+
+    - name: Add ros2 repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu {{ ansible_distribution_release | lower }} main"
+        state: present
+        filename: ros2
+
+    - name: Update, Upgrade, and Autoclean
+      apt:
+        update_cache: yes
+        upgrade: true
+        
+    - name: Install ros2 humble
+      apt:
+        name:
+        - ros-humble-desktop
+        state: present
