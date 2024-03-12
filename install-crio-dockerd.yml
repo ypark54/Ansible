@@ -1,35 +1,65 @@
 ---
 - name: Install cri-dockerd
-  hosts: all
+  hosts: self, k8s_control_plane, k8s_worker
   become: yes  # Required for installation and systemd manipulation
+  vars:
+    go_version: "1.22.0"
+    go_arch: "linux-amd64"
+    go_download_url: "https://go.dev/dl/go{{ go_version }}.{{ go_arch }}.tar.gz"
+    go_install_dir: "/usr/local"
+    user_home_dir: "/home/user"  # Replace with the actual user's home directory
   tasks:
+    - name: Download Go tarball
+      get_url:
+        url: "{{ go_download_url }}"
+        dest: "/tmp/go{{ go_version }}.{{ go_arch }}.tar.gz"
+        mode: '0644'
+
+    - name: Remove any existing Go installation
+      file:
+        path: "{{ go_install_dir }}/go"
+        state: absent
+
+    - name: Extract Go tarball to install directory
+      unarchive:
+        src: "/tmp/go{{ go_version }}.{{ go_arch }}.tar.gz"
+        dest: "{{ go_install_dir }}"
+        remote_src: yes
+        creates: "{{ go_install_dir }}/go/bin/go"
+
+    - name: Add Go to PATH in user's .bashrc
+      lineinfile:
+        path: "{{ user_home_dir }}/.bashrc"
+        line: 'export PATH=$PATH:/usr/local/go/bin'
+        create: no  # Assumes .bashrc already exists; set to yes to create if not present
+      become: no  # This task does not require root privileges, and should use the actual user's privileges
     - name: Install required packages
-      ansible.builtin.apt:
+      apt:
         name: git, build-essential
         state: present
         update_cache: yes
 
     - name: Clone cri-dockerd repository
-      ansible.builtin.git:
+      git:
         repo: 'https://github.com/Mirantis/cri-dockerd.git'
         dest: '/tmp/cri-dockerd'
         clone: yes
         update: yes
 
     - name: Build cri-dockerd
-      ansible.builtin.shell:
+      shell:
         chdir: '/tmp/cri-dockerd'
         cmd: 'make cri-dockerd'
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/local/go/bin"
 
     - name: Install cri-dockerd binary
-      ansible.builtin.command:
+      command:
         cmd: 'install -o root -g root -m 0755 /tmp/cri-dockerd/cri-dockerd /usr/local/bin/cri-dockerd'
         creates: '/usr/local/bin/cri-dockerd'
 
     - name: Install systemd service and socket files
-      ansible.builtin.copy:
+      copy:
         src: '/tmp/cri-dockerd/packaging/systemd/{{ item }}'
         dest: '/etc/systemd/system/{{ item }}'
         owner: root
@@ -40,17 +70,17 @@
         - cri-docker.socket
 
     - name: Update cri-docker.service ExecStart path
-      ansible.builtin.replace:
+      replace:
         path: '/etc/systemd/system/cri-docker.service'
         regexp: '/usr/bin/cri-dockerd'
         replace: '/usr/local/bin/cri-dockerd'
 
     - name: Reload systemd daemon
-      ansible.builtin.systemd:
+      systemd:
         daemon_reload: yes
 
     - name: Enable and start cri-docker.socket
-      ansible.builtin.systemd:
+      systemd:
         name: cri-docker.socket
         enabled: yes
         state: started

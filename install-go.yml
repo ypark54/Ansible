@@ -1,6 +1,6 @@
 ---
 - name: Install Go programming language
-  hosts: all
+  hosts: self, k8s_control_plane, k8s_worker
   become: yes  # Needed for tasks that require root privileges
   vars:
     go_version: "1.22.0"

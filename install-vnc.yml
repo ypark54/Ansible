@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: k8s_control_plane, k8s_worker
   become: true
   tasks:
     - name: Update cache and install lightdm

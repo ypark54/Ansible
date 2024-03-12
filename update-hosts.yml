@@ -10,10 +10,11 @@
         state: present
         regexp: '^(\s*{{ item.split()[0] }})\s+{{ item.split()[1] }}.*$'
       loop:
-        - "192.168.35.202  ubuntu-master-1"
-        - "192.168.35.203  ubuntu-master-2"
-        - "192.168.35.204  ubuntu-ha-proxy"
-        - "192.168.35.212  ubuntu-slave-1"
-        - "192.168.35.213  ubuntu-slave-2"
-        - "192.168.35.214  ubuntu-slave-3"
-        - "192.168.35.215  ubuntu-slave-4"
+        - "192.168.35.190  ubuntu-ha-proxy"
+        - "192.168.35.191  ubuntu-master-1"
+        - "192.168.35.192  ubuntu-master-2"
+        - "192.168.35.193  ubuntu-slave-1"
+        - "192.168.35.194  ubuntu-slave-2"
+        - "192.168.35.195  ubuntu-ceph-1"
+        - "192.168.35.196  ubuntu-ceph-2"
+        - "192.168.35.197  ubuntu-ceph-3"

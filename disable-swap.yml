@@ -1,6 +1,6 @@
 ---
 - name: Disable swap and update /etc/fstab to prevent swap from being enabled on boot
-  hosts: all
+  hosts: k8s_control_plane, k8s_worker
   become: yes  # This is equivalent to using sudo
   tasks:
     - name: Disable all swap spaces immediately
