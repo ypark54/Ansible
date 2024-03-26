@@ -14,19 +14,16 @@
         url: "{{ go_download_url }}"
         dest: "/tmp/go{{ go_version }}.{{ go_arch }}.tar.gz"
         mode: '0644'
-
     - name: Remove any existing Go installation
       file:
         path: "{{ go_install_dir }}/go"
         state: absent
-
     - name: Extract Go tarball to install directory
       unarchive:
         src: "/tmp/go{{ go_version }}.{{ go_arch }}.tar.gz"
         dest: "{{ go_install_dir }}"
         remote_src: true
         creates: "{{ go_install_dir }}/go/bin/go"
-
     - name: Add Go to PATH in user's .bashrc
       lineinfile:
         path: "{{ user_home_dir }}/.bashrc"

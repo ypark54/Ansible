@@ -8,13 +8,11 @@
         name:
           - lightdm
         state: present
-
     - name: Set lightdm as the default display manager
       copy:
         content: /usr/sbin/lightdm
         dest: /etc/X11/default-display-manager
         mode: preserve
-
     - name: Reconfigure lightdm in a non-interactive way
       shell: DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure lightdm
       environment:
@@ -28,7 +26,6 @@
         pre_reboot_delay: 0
         post_reboot_delay: 60
         test_command: uptime
-
     - name: Wait for the server to come back
       wait_for_connection:
         delay: 5

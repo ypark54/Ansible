@@ -8,7 +8,6 @@
         url: https://download.ceph.com/keys/release.asc
         dest: /tmp/ceph-release.asc
         mode: '0644'
-
     - name: Add Ceph release key
       shell: gpg --dearmor < /tmp/ceph-release.asc > /etc/apt/trusted.gpg.d/ceph-keyring.gpg
       args:
@@ -16,21 +15,13 @@
         creates: /etc/apt/trusted.gpg.d/ceph-keyring.gpg
       become: true
       changed_when: false
-
     - name: Add Ceph repository
       apt_repository:
         repo: 'deb https://download.ceph.com/debian-reef/ jammy main'
         state: present
-
     - name: Update and upgrade apt packages
       apt:
         update_cache: true
         upgrade: dist
         force_apt_get: true
-        cache_valid_time: 3600  # Change as needed
-
-  # Optionally, you might want to clean up after adding the key
-    - name: Remove the temporary Ceph release key file
-      file:
-        path: /tmp/ceph-release.asc
-        state: absent
+        cache_valid_time: 3600

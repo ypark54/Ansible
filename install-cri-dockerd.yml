@@ -120,3 +120,9 @@
         name: cri-docker.socket
         enabled: true
         state: started
+#    - name: Update apt and install cri-dockerd
+#      apt:
+#        update_cache: true
+#        name:
+#          - cri-dockerd
+#        state: present

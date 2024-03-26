@@ -16,7 +16,6 @@
           - containerd
           - runc
         state: absent
-
     - name: Update apt cache and install required packages
       apt:
         update_cache: true
@@ -25,25 +24,21 @@
           - ca-certificates
           - curl
         state: present
-
     - name: Ensure /etc/apt/keyrings directory exists
       file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
-
     - name: Download Docker GPG key
       get_url:
         url: https://download.docker.com/linux/ubuntu/gpg
         dest: /etc/apt/keyrings/docker.asc
         mode: 'a+r'
-
     - name: Add Docker repository
       apt_repository:
         repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ dist }} stable"
         state: present
         filename: docker
-
     - name: Update apt and install Docker
       apt:
         update_cache: true
