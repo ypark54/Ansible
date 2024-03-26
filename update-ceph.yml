@@ -1,7 +1,7 @@
 ---
 - name: Configure Ceph repository and perform dist-upgrade
   hosts: all
-  become: yes  # Use sudo for the tasks
+  become: true  # Use sudo for the tasks
   tasks:
     - name: Download Ceph release key
       get_url:
@@ -13,7 +13,9 @@
       shell: gpg --dearmor < /tmp/ceph-release.asc > /etc/apt/trusted.gpg.d/ceph-keyring.gpg
       args:
         executable: /bin/bash
-      become: yes
+        creates: /etc/apt/trusted.gpg.d/ceph-keyring.gpg
+      become: true
+      changed_when: false
 
     - name: Add Ceph repository
       apt_repository:
@@ -22,9 +24,9 @@
 
     - name: Update and upgrade apt packages
       apt:
-        update_cache: yes
+        update_cache: true
         upgrade: dist
-        force_apt_get: yes
+        force_apt_get: true
         cache_valid_time: 3600  # Change as needed
 
   # Optionally, you might want to clean up after adding the key

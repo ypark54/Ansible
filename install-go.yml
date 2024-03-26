@@ -1,13 +1,13 @@
 ---
 - name: Install Go programming language
-  hosts: self, k8s_control_plane, k8s_worker
-  become: yes  # Needed for tasks that require root privileges
+  hosts: self
+  become: true  # Needed for tasks that require root privileges
   vars:
     go_version: "1.22.0"
     go_arch: "linux-amd64"
     go_download_url: "https://go.dev/dl/go{{ go_version }}.{{ go_arch }}.tar.gz"
     go_install_dir: "/usr/local"
-    user_home_dir: "/home/yep"  # Replace with the actual user's home directory
+    user_home_dir: "/home/user"  # Replace with the actual user's home directory
   tasks:
     - name: Download Go tarball
       get_url:
@@ -24,12 +24,12 @@
       unarchive:
         src: "/tmp/go{{ go_version }}.{{ go_arch }}.tar.gz"
         dest: "{{ go_install_dir }}"
-        remote_src: yes
+        remote_src: true
         creates: "{{ go_install_dir }}/go/bin/go"
 
     - name: Add Go to PATH in user's .bashrc
       lineinfile:
         path: "{{ user_home_dir }}/.bashrc"
         line: 'export PATH=$PATH:/usr/local/go/bin'
-        create: no  # Assumes .bashrc already exists; set to yes to create if not present
-      become: no  # This task does not require root privileges, and should use the actual user's privileges
+        create: false  # Assumes .bashrc already exists; set to yes to create if not present
+      become: false  # This task does not require root privileges, and should use the actual user's privileges

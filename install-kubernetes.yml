@@ -1,7 +1,7 @@
 ---
 - name: Install Kubernetes on Ubuntu
   hosts: k8s_control_plane, k8s_worker
-  become: yes  # Required to become root
+  become: true  # Required to become root
   tasks:
     - name: Disable all swap spaces immediately
       command:
@@ -13,8 +13,8 @@
         content: |
           overlay
           br_netfilter
+        mode: preserve
       notify: Load modules
-
     - name: Set sysctl parameters for Kubernetes
       copy:
         dest: /etc/sysctl.d/k8s.conf
@@ -22,16 +22,17 @@
           net.bridge.bridge-nf-call-iptables  = 1
           net.bridge.bridge-nf-call-ip6tables = 1
           net.ipv4.ip_forward                 = 1
+        mode: preserve
       notify: Reload sysctl
     - name: Comment out swap entry in /etc/fstab
       lineinfile:
         path: /etc/fstab
         regexp: '^(.+\sswap\s.+)$'
         line: '#\1'
-        backrefs: yes
+        backrefs: true
     - name: Update apt cache and install required packages
       apt:
-        update_cache: yes
+        update_cache: true
         autoremove: true
         name:
           - apt-transport-https
@@ -39,40 +40,36 @@
           - curl
           - gpg
         state: present
-
     - name: Ensure /etc/apt/keyrings directory exists
       file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
-
     - name: Download Kubernetes GPG key
       get_url:
         url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
         dest: "/tmp/kubernetes-apt-keyring.key"
         mode: '0644'
-
     - name: Import Kubernetes GPG key
-      shell:
-        cmd: "gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-apt-keyring.key"
+      shell: gpg --dearmor < /tmp/kubernetes-apt-keyring.key > /etc/apt/keyrings/kubernetes-apt-keyring.gpg
       args:
-        creates: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
-
+        executable: /bin/bash
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      become: true
+      changed_when: false
     - name: Add Kubernetes APT repository
       apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
         state: present
         filename: kubernetes
-
     - name: Install Kubernetes components
       apt:
-        update_cache: yes
+        update_cache: true
         name:
           - kubelet
           - kubeadm
           - kubectl
         state: present
-
     - name: Hold Kubernetes components at their current version
       apt:
         name:
@@ -89,8 +86,7 @@
         - br_netfilter
       # Ensuring idempotence: Run only if the module is not already loaded
       when: ansible_facts['kernel_modules'][item] is not defined
-
     - name: Reload sysctl
       command:
         cmd: sysctl --system
-      ignore_errors: yes
+      ignore_errors: true

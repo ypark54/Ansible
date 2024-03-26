@@ -4,22 +4,22 @@
   tasks:
     - name: Update cache and install lightdm
       apt:
-        update_cache: yes
+        update_cache: true
         name:
-        - lightdm
+          - lightdm
         state: present
 
     - name: Set lightdm as the default display manager
       copy:
         content: /usr/sbin/lightdm
         dest: /etc/X11/default-display-manager
+        mode: preserve
 
     - name: Reconfigure lightdm in a non-interactive way
       shell: DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure lightdm
       environment:
         DEBIAN_FRONTEND: "noninteractive"
         DEBCONF_NONINTERACTIVE_SEEN: "true"
-    
     - name: Reboot the server
       reboot:
         msg: "Rebooting for system updates"
@@ -30,16 +30,14 @@
         test_command: uptime
 
     - name: Wait for the server to come back
-      ansible.builtin.wait_for_connection:
+      wait_for_connection:
         delay: 5
         timeout: 300
-
     - name: Install x11vnc
       apt:
         name:
-        - x11vnc
+          - x11vnc
         state: present
-    
     - name: Ensure x11vnc service file is present
       copy:
         dest: /lib/systemd/system/x11vnc.service
@@ -64,10 +62,9 @@
     - name: Enable and start x11vnc service
       systemd:
         name: x11vnc
-        enabled: yes
+        enabled: true
         state: started
-        
   handlers:
     - name: reload systemd
       systemd:
-        daemon_reload: yes
+        daemon_reload: true
