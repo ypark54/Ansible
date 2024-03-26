@@ -10,25 +10,25 @@
     user_home_dir: "/home/yep"  # Replace with the actual user's home directory
   tasks:
     - name: Download Go tarball
-      ansible.builtin.get_url:
+      get_url:
         url: "{{ go_download_url }}"
         dest: "/tmp/go{{ go_version }}.{{ go_arch }}.tar.gz"
         mode: '0644'
 
     - name: Remove any existing Go installation
-      ansible.builtin.file:
+      file:
         path: "{{ go_install_dir }}/go"
         state: absent
 
     - name: Extract Go tarball to install directory
-      ansible.builtin.unarchive:
+      unarchive:
         src: "/tmp/go{{ go_version }}.{{ go_arch }}.tar.gz"
         dest: "{{ go_install_dir }}"
         remote_src: yes
         creates: "{{ go_install_dir }}/go/bin/go"
 
     - name: Add Go to PATH in user's .bashrc
-      ansible.builtin.lineinfile:
+      lineinfile:
         path: "{{ user_home_dir }}/.bashrc"
         line: 'export PATH=$PATH:/usr/local/go/bin'
         create: no  # Assumes .bashrc already exists; set to yes to create if not present

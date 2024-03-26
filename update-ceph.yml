@@ -4,7 +4,7 @@
   become: yes  # Use sudo for the tasks
   tasks:
     - name: Download Ceph release key
-      ansible.builtin.get_url:
+      get_url:
         url: https://download.ceph.com/keys/release.asc
         dest: /tmp/ceph-release.asc
         mode: '0644'
@@ -16,12 +16,12 @@
       become: yes
 
     - name: Add Ceph repository
-      ansible.builtin.apt_repository:
+      apt_repository:
         repo: 'deb https://download.ceph.com/debian-reef/ jammy main'
         state: present
 
     - name: Update and upgrade apt packages
-      ansible.builtin.apt:
+      apt:
         update_cache: yes
         upgrade: dist
         force_apt_get: yes
@@ -29,6 +29,6 @@
 
   # Optionally, you might want to clean up after adding the key
     - name: Remove the temporary Ceph release key file
-      ansible.builtin.file:
+      file:
         path: /tmp/ceph-release.asc
         state: absent

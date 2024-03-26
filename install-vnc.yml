@@ -21,7 +21,7 @@
         DEBCONF_NONINTERACTIVE_SEEN: "true"
     
     - name: Reboot the server
-      ansible.builtin.reboot:
+      reboot:
         msg: "Rebooting for system updates"
         connect_timeout: 5
         reboot_timeout: 300
